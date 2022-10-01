@@ -226,7 +226,7 @@ def train():
     num_objects = envs.getNumObj()
     num_classes = 2 * num_objects - 1 
     print(f'num class = {num_classes}')
-    classifier = State_abstractor(goal_str=env, use_equivariant=use_equivariant, equal_param=False, device=device)
+    classifier = State_abstractor(goal_str=env, use_equivariant=use_equivariant, device=device)
     classifier = classifier.load_classifier()
     # classifier = load_classifier(goal_str = env,num_classes=num_classes,use_equivariant=use_equivariant, use_proser=use_proser, dummy_number=dummy_number,device=device)
     agent = createAgent(num_classes)

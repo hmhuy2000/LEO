@@ -282,12 +282,8 @@ def collectData4ClassifierUsingDeconstruct(env='2b2b1r', num_samples= 1000, debu
     transitions.reverse()
 
     true_index = [i for i in range(len(transitions)) if transitions[i][3] is True]
-    # print(len(true_index))
-    print(true_index)
     perfect_index = [true_index[i] for i in range(len(true_index)) if (true_index[i] == num_classes-2) or (true_index[i]-true_index[i-1] == num_classes-1)]
-    # print(len(perfect_index))
-    print(perfect_index)
-    # exit()
+    
     for i in perfect_index:
         for j in range(num_classes-1, 0, -1):
         
@@ -333,9 +329,7 @@ def collectData4ClassifierUsingDeconstruct(env='2b2b1r', num_samples= 1000, debu
         "DONES": bool,
         "ABS_STATE_INDEX": np.int32,
     })
-    print("Number collected data sample: ", dataset.size)
     dataset = dataset.split(5000*num_classes)
-    print("Number collected data sample: ", dataset.size)
     print("Number collected data sample: ", len(dataset['OBS']))
 
     dataset.save_hdf5(f"bulletarm_baselines/fc_dqn/classifiers/{env}.h5")

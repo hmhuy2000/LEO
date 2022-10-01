@@ -57,10 +57,9 @@ def load_dataset(goal_str, validation_fraction=0.2, test_fraction=0.1, eval=Fals
 
 
 class State_abstractor():
-    def __init__(self, goal_str=None, use_equivariant=None, equal_param=False, device=None):
+    def __init__(self, goal_str=None, use_equivariant=None, device=None):
         self.goal_str = goal_str
         self.use_equivariant = use_equivariant
-        self.equal_param = equal_param
         self.device = device
         self.batch_size = 32
 
@@ -80,16 +79,12 @@ class State_abstractor():
 
         if self.use_equivariant:
             self.name = 'equi_' + self.goal_str
-        elif self.equal_param:
-            self.name = 'equal_' + self.goal_str
         else:
             self.name = self.goal_str
 
         self.build_state_abstractor()
 
     def build_state_abstractor(self):
-        if self.use_equivariant:
-            self.equal_param = False
 
         if self.use_equivariant:
             print('='*50)
@@ -128,16 +123,7 @@ class State_abstractor():
         
         conv_encoder = SplitConcat([conv_obs_encoder, conv_hand_obs_encoder], 1)
 
-        if self.equal_param:
-            intermediate_fc = FCEncoder({
-            "input_size": 256,
-            "neurons": [512, 1024, 1024, 2048, 2048, 1024, 1024, 512, 256, 128],
-            "use_batch_norm": True,
-            "use_layer_norm": False,
-            "activation_last": True
-        })
-        else:
-            intermediate_fc = FCEncoder({
+        intermediate_fc = FCEncoder({
             "input_size": 256,
             "neurons": [256, 256, 128],
             "use_batch_norm": True,
@@ -160,7 +146,7 @@ class State_abstractor():
         self.dataset, self.valid_dataset, self.test_dataset = load_dataset(goal_str=self.goal_str)
         epoch_size = len(self.dataset['OBS']) // self.batch_size
         print(f'Number of trainable parameters: {sum(p.numel() for p in self.classifier.parameters() if p.requires_grad)}')
-        # exit()
+     
         opt = optim.Adam(self.classifier.parameters(), lr=learning_rate, weight_decay=weight_decay)
         best_val_loss, best_classifier = None, None
         best_step = None
@@ -279,7 +265,6 @@ class State_abstractor():
 
     def evaluate_miss_dataset(self):
         self.eval_dataset = load_dataset(goal_str=self.goal_str, eval=True)
-        # self.dataset, self.valid_dataset, self.test_dataset = load_dataset(goal_str=self.goal_str)
 
         self.load_classifier()
         preds = []
@@ -293,25 +278,12 @@ class State_abstractor():
         print(f"Acc score: {accuracy_score(self.eval_dataset['TRUE_ABS_STATE_INDEX'], preds)}")
         print(f"F1 score: {f1_score(self.eval_dataset['TRUE_ABS_STATE_INDEX'], preds, average='weighted')}")
         print(f"Classification report: {classification_report(self.eval_dataset['TRUE_ABS_STATE_INDEX'], preds)}")
-        # final_valid_loss = self.validate(dataset=self.valid_dataset)
-        # print(f"Best Valid Loss: {final_valid_loss[0]} and Best Valid Accuracy: {final_valid_loss[1]}")
-        # test_loss = self.validate(dataset=self.test_dataset)
-        # print(f"Best Test Loss: {test_loss[0]} and Best Test Accuracy: {test_loss[1]}")
 
 
 if __name__ == '__main__':
     a = 'house_building_4'
-    # model1 = State_abstractor(goal_str=a, use_equivariant=False, equal_param=False, device=torch.device('cuda'))
-    # model1.evaluate_miss_dataset()
-    # model.load_classifier()
-    # print('='*50)
-    # model2 = State_abstractor(goal_str=a, use_equivariant=False, equal_param=True, device=torch.device('cuda'))
-    # model2.train_state_abstractor()
-    # model2.evaluate_miss_dataset()
-    # print('='*50)
-    model3 = State_abstractor(goal_str=a, use_equivariant=False, equal_param=True, device=torch.device('cuda'))
-    model3.evaluate_miss_dataset()
-    # model3.train_state_abstractor(num_training_steps=15000)
+    model = State_abstractor(goal_str=a, use_equivariant=False, device=torch.device('cuda'))
+    model.train_state_abstractor(num_training_steps=15000)
 
 
 
