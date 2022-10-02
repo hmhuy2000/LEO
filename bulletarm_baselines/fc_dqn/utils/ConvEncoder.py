@@ -63,9 +63,7 @@ class ConvEncoder(nn.Module):
                     x = self.norms[i](x)
 
                 x = self.relu(x)
-                if i == len(self.filter_sizes)-1:
-                    x = nn.MaxPool2d(kernel_size=4)
-                else:
+                if i != len(self.filter_sizes)-1:
                     x = nn.MaxPool2d(kernel_size=2)
 
         if self.flat_output:
