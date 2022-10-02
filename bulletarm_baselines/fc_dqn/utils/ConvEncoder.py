@@ -25,7 +25,6 @@ class ConvEncoder(nn.Module):
         if self.flat_output:
             self.output_size = int(np.prod(self.output_size))
         self.relu = nn.ReLU(inplace=True)
-        self.pool = nn.MaxPool2d(kernel_size=2)
 
         # create conv and padding layers
         convs, pads = self.make_convs_()
@@ -64,7 +63,8 @@ class ConvEncoder(nn.Module):
                     x = self.norms[i](x)
 
                 x = self.relu(x)
-                x = self.pool(x)
+                if i != len(self.filter_sizes)-1:
+                    x = nn.MaxPool2d(kernel_size=2)
 
         if self.flat_output:
             x = torch.flatten(x, start_dim=1)

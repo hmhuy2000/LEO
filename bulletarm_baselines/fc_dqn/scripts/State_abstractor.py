@@ -58,10 +58,9 @@ def load_dataset(goal_str, validation_fraction=0.2, test_fraction=0.1, eval=Fals
 
 
 class State_abstractor():
-    def __init__(self, goal_str=None, use_equivariant=None, equal_param=False, device=None):
+    def __init__(self, goal_str=None, use_equivariant=None, device=None):
         self.goal_str = goal_str
         self.use_equivariant = use_equivariant
-        self.equal_param = equal_param
         self.device = device
         self.batch_size = 32
 
@@ -81,16 +80,12 @@ class State_abstractor():
 
         if self.use_equivariant:
             self.name = 'equi_' + self.goal_str
-        elif self.equal_param:
-            self.name = 'equal_' + self.goal_str
         else:
             self.name = self.goal_str
 
         self.build_state_abstractor()
 
     def build_state_abstractor(self):
-        if self.use_equivariant:
-            self.equal_param = False
 
         if self.use_equivariant:
             print('='*50)
@@ -120,25 +115,17 @@ class State_abstractor():
             "flat_output": False
             })
 
-        conv_obs_avg_pool = nn.AvgPool2d(kernel_size=2, stride=1, padding=0)
+        conv_obs_avg_pool = nn.MaxPool2d(kernel_size=4, stride=1, padding=0)
         conv_obs_view = View([128])
         conv_obs_encoder = nn.Sequential(conv_obs, conv_obs_avg_pool, conv_obs_view)
 
+        conv_hand_obs_avg_pool = nn.MaxPool2d(kernel_size=2, stride=1, padding=0)
         conv_hand_obs_view = View([128])
-        conv_hand_obs_encoder = nn.Sequential(conv_hand_obs, conv_hand_obs_view)
+        conv_hand_obs_encoder = nn.Sequential(conv_hand_obs, conv_hand_obs_avg_pool, conv_hand_obs_view)
         
         conv_encoder = SplitConcat([conv_obs_encoder, conv_hand_obs_encoder], 1)
 
-        if self.equal_param:
-            intermediate_fc = FCEncoder({
-            "input_size": 256,
-            "neurons": [512, 1024, 1024, 2048, 2048, 1024, 1024, 512, 256, 128],
-            "use_batch_norm": True,
-            "use_layer_norm": False,
-            "activation_last": True
-        })
-        else:
-            intermediate_fc = FCEncoder({
+        intermediate_fc = FCEncoder({
             "input_size": 256,
             "neurons": [256, 256, 128],
             "use_batch_norm": True,
@@ -161,7 +148,7 @@ class State_abstractor():
         self.dataset, self.valid_dataset, self.test_dataset = load_dataset(goal_str=self.goal_str)
         epoch_size = len(self.dataset['OBS']) // self.batch_size
         print(f'Number of trainable parameters: {sum(p.numel() for p in self.classifier.parameters() if p.requires_grad)}')
-        # exit()
+     
         opt = optim.Adam(self.classifier.parameters(), lr=learning_rate, weight_decay=weight_decay)
         best_val_loss, best_classifier = None, None
         best_step = None
