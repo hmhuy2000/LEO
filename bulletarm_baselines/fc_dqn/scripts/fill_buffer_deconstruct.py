@@ -214,7 +214,6 @@ def train_fillDeconstructUsingRunner(agent, replay_buffer,classifier):
     abs_goal = update_abs_goals(abs_state)
     abs_goal_next =  update_abs_goals(abs_state_next)
 
-
     actions_star_idx, actions_star = agent.getActionFromPlan(torch.tensor(np.expand_dims(action, 0)))
     replay_buffer.add(ExpertTransition(
       torch.tensor(state).float(),
@@ -238,7 +237,7 @@ def train_fillDeconstructUsingRunner(agent, replay_buffer,classifier):
     )
   decon_envs.close()
 
-def collectData4ClassifierUsingDeconstruct(env='2b2b1r', num_samples= 1000, debug=False):
+def collectData4ClassifierUsingDeconstruct(env='2b2b1r', num_samples= 1000):
     if env in ['block_stacking',
              'house_building_1',
              'house_building_2',
@@ -266,17 +265,11 @@ def collectData4ClassifierUsingDeconstruct(env='2b2b1r', num_samples= 1000, debu
     decon_envs = EnvWrapper(num_processes, deconstruct_env, env_config, planner_config)
     num_objects = decon_envs.getNumObj()
     num_classes = 2*num_objects-1
-    print(num_classes)
+    print('number of classes:',num_classes)
 
     num_episodes = num_samples // num_classes
     dataset = ListDataset()
 
-    if debug:
-        obss = []
-        inhands = []
-        labels = []
-        states = []
-        num_episodes = 20
     transitions = decon_envs.gatherDeconstructTransitions(num_episodes)
     decon_envs.close()
     transitions.reverse()
@@ -291,11 +284,6 @@ def collectData4ClassifierUsingDeconstruct(env='2b2b1r', num_samples= 1000, debu
     for i in perfect_index:
         for j in range(num_classes-1, 0, -1):
         
-            if debug:
-                states.append(transitions[i-j+1][0][0])
-                obss.append(transitions[i-j+1][0][2])
-                inhands.append(transitions[i-j+1][0][1])
-                labels.append(j)
             dataset.add("HAND_BITS", transitions[i-j+1][0][0])
             dataset.add("OBS", transitions[i-j+1][0][2])
             dataset.add("HAND_OBS", transitions[i-j+1][0][1])
@@ -303,30 +291,12 @@ def collectData4ClassifierUsingDeconstruct(env='2b2b1r', num_samples= 1000, debu
             dataset.add("ABS_STATE_INDEX", j)
                 
             if j == 1:
-                if debug:
-                    states.append(transitions[i][4][0])
-                    obss.append(transitions[i][4][2])
-                    inhands.append(transitions[i][4][1])
-                    labels.append(0)
                 dataset.add("HAND_BITS", transitions[i][4][0])
                 dataset.add("OBS", transitions[i][4][2])
                 dataset.add("HAND_OBS", transitions[i][4][1])
                 dataset.add("DONES", 1)
                 dataset.add("ABS_STATE_INDEX", 0)
-    if debug:
-        create_folder('check_collect_image')
-        print(len(states))
-        for i in range(len(states)):
-            plt.figure(figsize=(15,4))
-            plt.subplot(1,2,1)
-            plt.imshow(obss[i], cmap='gray')
-            plt.colorbar()
-            plt.subplot(1,2,2)
-            plt.imshow(inhands[i], cmap='gray')
-            plt.colorbar()
-            plt.suptitle(f"Label: {labels[i]}, State: {states[i]}")
-            plt.savefig(f'check_collect_image/image_{i}.png')
-        exit()
+
             
     dataset = dataset.to_array_dataset({
         "HAND_BITS": np.int32, "OBS": np.float32, "HAND_OBS": np.float32,
@@ -343,4 +313,10 @@ def collectData4ClassifierUsingDeconstruct(env='2b2b1r', num_samples= 1000, debu
     print("DONE!!!")
 
 if __name__ == '__main__':
-    collectData4ClassifierUsingDeconstruct(env='house_building_2', num_samples=80000, debug=True)
+    create_folder('bulletarm_baselines/fc_dqn/classifiers')
+
+    if (env == 'house_building_4'):
+        num_samples = 100000
+    else:
+        num_samples = 50000
+    collectData4ClassifierUsingDeconstruct(env=env, num_samples=num_samples)

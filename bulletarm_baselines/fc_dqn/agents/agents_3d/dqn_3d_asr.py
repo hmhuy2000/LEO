@@ -3,7 +3,6 @@ import torch
 import torch.nn.functional as F
 from copy import deepcopy
 from bulletarm_baselines.fc_dqn.agents.agents_3d.base_3d import Base3D
-import matplotlib.pyplot as plt
 from bulletarm_baselines.fc_dqn.utils import torch_utils
 
 
@@ -42,8 +41,6 @@ class DQN3DASR(Base3D):
 
     def forwardQ2(self, states, in_hand, obs, obs_encoding, pixels, target_net=False, to_cpu=False):
         patch = self.getQ2Input(obs.to(self.device), pixels.to(self.device))
-        # plt.imshow(patch.cpu().numpy().reshape((24,24)))
-        # plt.show()
         patch = self.encodeInHand(patch, in_hand.to(self.device))
 
         q2 = self.q2 if not target_net else self.target_q2
@@ -52,8 +49,6 @@ class DQN3DASR(Base3D):
             states.long()]
         if to_cpu:
             q2_output = q2_output.cpu()
-        # plt.imshow(q2_output.cpu().numpy().reshape((-1,1)))
-        # plt.show()
         return q2_output
 
     def decodeA2(self, a2_id):
@@ -72,8 +67,6 @@ class DQN3DASR(Base3D):
     def getEGreedyActions(self, states, in_hand, obs, abs_states, abs_goals, eps, coef=0.):
         with torch.no_grad():
             q_value_maps, obs_encoding = self.forwardFCN(states, in_hand, obs,abs_states,abs_goals, to_cpu=True)
-            # plt.imshow(q_value_maps.reshape((128,128)))
-            # plt.show()
             pixels = torch_utils.argmax2d(q_value_maps).long()
             q2_output = self.forwardQ2(states, in_hand, obs, obs_encoding, pixels, to_cpu=True)
             a2_id = torch.argmax(q2_output, 1)

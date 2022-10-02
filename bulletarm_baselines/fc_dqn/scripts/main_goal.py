@@ -1,3 +1,4 @@
+from re import L
 import matplotlib
 matplotlib.use('Agg')
 import time
@@ -238,13 +239,13 @@ def train():
         print('---- use true abstract state from environment    -----')
     
 
-    if load_model_pre:
+    if load_model_pre != 'None':
         agent.loadModel(load_model_pre)
     agent.train()
     eval_agent.train()
 
     # logging
-    base_dir = os.path.join(log_pre, '{}_{}_{}'.format(alg, model, env))
+    base_dir = os.path.join(log_pre, f'{env}_{wandb_group}')
     if note:
         base_dir += '_'
         base_dir += note
@@ -362,7 +363,7 @@ def train():
         buffer_obs = getCurrentObs(in_hands, obs)
         actions_star = torch.cat((actions_star, states.unsqueeze(1)), dim=1)
         envs.stepAsync(actions_star, auto_reset=False)
-
+        print(len(replay_buffer))
         if len(replay_buffer) >= training_offset:
             for training_iter in range(training_iters):
                 train_step(agent, replay_buffer, logger)
@@ -460,19 +461,20 @@ def train():
     envs.close()
     eval_envs.close()
 
-if __name__ == '__main__':
-    # print('---------------------    trainning phrase    -------------------------')
-    # train()
-    #------------- eval ------------#
+def train_phrase_func():
+    print('---------------------    trainning phrase    -------------------------')
+    train()
 
+def valid_phrase_func():
     print('---------------------    evaluate phrase     -------------------------')
+    if (load_model_pre == 'None'):
+        print('no weight path')
+        return
     render = False
     env_config['render'] = render
     eval_envs = EnvWrapper(1, env, env_config, planner_config)
     num_objects = eval_envs.getNumObj()
     num_classes = 2 * num_objects - 1 
-    load_model_pre = 'agent_weight/house_building_4/'
-    # classifier = load_classifier(goal_str = env,num_classes=num_classes,use_equivariant=use_equivariant, use_proser=use_proser, dummy_number=dummy_number,device=device)
     classifier = State_abstractor(goal_str=env, use_equivariant=use_equivariant, device=device).load_classifier()
 
     eval_agent = createAgent(num_classes,test=True)
@@ -482,3 +484,11 @@ if __name__ == '__main__':
     eval_agent.eval()
     evaluate(envs=eval_envs,agent=eval_agent,num_eval_episodes=100,classifier=classifier, debug=False,render=render)
     eval_envs.close()
+
+if __name__ == '__main__':
+
+    if (train_phrase):
+        train_phrase_func()
+    else:
+        valid_phrase_func()
+

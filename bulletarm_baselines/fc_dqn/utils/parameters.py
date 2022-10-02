@@ -55,7 +55,7 @@ training_group.add_argument('--max_z', type=float, default=0.20, help='The max z
 training_group.add_argument('--equi_n', type=int, default=4, help='The order of the equivariant group for equivariant networks')
 training_group.add_argument('--aug', type=strToBool, default=False, help='If true, perform RAD data augmentation at each sample step')
 training_group.add_argument('--aug_type', type=str, choices=['se2', 'cn', 't', 'shift'], default='se2', help='The type of data augmentation')
-training_group.add_argument('--use_classifier', type=int, default=0)
+training_group.add_argument('--use_classifier', type=strToBool, default=True)
 
 eval_group = parser.add_argument_group('eval')
 eval_group.add_argument('--num_eval_processes', type=int, default=5, help='The number of parallel environments for evaluation')
@@ -84,12 +84,12 @@ logging_group.add_argument('--no_bar', action='store_true')
 logging_group.add_argument('--time_limit', type=float, default=10000)
 logging_group.add_argument('--load_sub', type=str, default=None)
 logging_group.add_argument('--wandb_group', type=str, default=None)
-logging_group.add_argument('--wandb_logs', type=int, default=0)
+logging_group.add_argument('--wandb_logs', type=strToBool, default=False)
 logging_group.add_argument('--get_bad_pred', type=int, default=0)
 logging_group.add_argument('--classifier_name', type=str, default=None)
-buffer_group.add_argument('--dummy_number', type=int, default=1)
-buffer_group.add_argument('--use_equivariant', type=int, default=0)
-# buffer_group.add_argument('--use_proser', type=int, default=0)
+training_group.add_argument('--dummy_number', type=int, default=1)
+training_group.add_argument('--use_equivariant', type=strToBool, default=False)
+training_group.add_argument('--train_phrase', type=strToBool, default=True)
 
 args = parser.parse_args()
 dummy_number = args.dummy_number
@@ -98,13 +98,15 @@ use_equivariant = args.use_equivariant
 # env
 random_orientation = args.random_orientation
 env = args.env
+if (env == 'house_building_3'):
+  env = '1l2b2r'
 num_objects = args.num_objects
 max_episode_steps = args.max_episode_steps
 action_sequence = args.action_sequence
 num_processes = args.num_processes
 render = args.render
 robot = args.robot
-
+train_phrase = args.train_phrase
 
 workspace_size = args.workspace_size
 if env.find('bumpy') > -1:
