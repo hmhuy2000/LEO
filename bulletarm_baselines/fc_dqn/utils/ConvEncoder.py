@@ -64,7 +64,7 @@ class ConvEncoder(nn.Module):
                     x = self.norms[i](x)
 
                 x = self.relu(x)
-                if not :
+                if not last:
                     x = F.max_pool2d(x, 2)
 
         if self.flat_output:
