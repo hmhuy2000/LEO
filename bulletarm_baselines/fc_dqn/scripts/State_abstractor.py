@@ -94,6 +94,14 @@ class State_abstractor():
             conv_obs = EquiObs(num_subgroups=4, filter_sizes=[3, 3, 3, 3, 3, 3], filter_counts=[32, 64, 128, 256, 512, 128])
 
             conv_hand_obs = EquiHandObs(num_subgroups=8, filter_sizes=[3, 3, 3, 3], filter_counts=[32, 64, 128, 128])
+            
+            conv_obs_max_pool = nn.MaxPool2d(kernel_size=2)
+            conv_obs_view = View([128])
+            conv_obs_encoder = nn.Sequential(conv_obs, conv_obs_max_pool, conv_obs_view)
+
+            conv_hand_obs_view = View([128])
+            conv_hand_obs_encoder = nn.Sequential(conv_hand_obs, conv_hand_obs_view)
+        
         else:    
             conv_obs = ConvEncoder({
             "input_size": [128, 128, 1],
@@ -115,13 +123,13 @@ class State_abstractor():
             "flat_output": False
             })
 
-        conv_obs_avg_pool = nn.MaxPool2d(kernel_size=4)
-        conv_obs_view = View([128])
-        conv_obs_encoder = nn.Sequential(conv_obs, conv_obs_avg_pool, conv_obs_view)
+            conv_obs_max_pool = nn.MaxPool2d(kernel_size=4)
+            conv_obs_view = View([128])
+            conv_obs_encoder = nn.Sequential(conv_obs, conv_obs_max_pool, conv_obs_view)
 
-        conv_hand_obs_avg_pool = nn.MaxPool2d(kernel_size=3)
-        conv_hand_obs_view = View([128])
-        conv_hand_obs_encoder = nn.Sequential(conv_hand_obs, conv_hand_obs_avg_pool, conv_hand_obs_view)
+            conv_hand_obs_max_pool = nn.MaxPool2d(kernel_size=3)
+            conv_hand_obs_view = View([128])
+            conv_hand_obs_encoder = nn.Sequential(conv_hand_obs, conv_hand_obs_max_pool, conv_hand_obs_view)
         
         conv_encoder = SplitConcat([conv_obs_encoder, conv_hand_obs_encoder], 1)
 
@@ -195,7 +203,7 @@ class State_abstractor():
         final_valid_loss = self.validate(dataset=self.valid_dataset)
         print(f"Best Valid Loss: {final_valid_loss[0]} and Best Valid Accuracy: {final_valid_loss[1]}")
         test_loss = self.validate(dataset=self.test_dataset)
-        print(f"Best Test Loss: {test_loss[0]} and Best Test Accuracy: {test_loss[1]}")
+        print(f"Test Loss: {test_loss[0]} and Test Accuracy: {test_loss[1]}")
 
         torch.save(self.classifier.state_dict(), f"bulletarm_baselines/fc_dqn/classifiers/{self.name}.pt")   
 
