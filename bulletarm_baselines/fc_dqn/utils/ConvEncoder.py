@@ -1,6 +1,7 @@
 import numpy as np
 import torch
 import torch.nn as nn
+import torch.nn.functional as F
 
 
 class ConvEncoder(nn.Module):
@@ -64,7 +65,7 @@ class ConvEncoder(nn.Module):
 
                 x = self.relu(x)
                 if i != len(self.filter_sizes)-1:
-                    x = nn.MaxPool2d(kernel_size=2)(x)
+                    x = F.max_pool2d(x, 2)
 
         if self.flat_output:
             x = torch.flatten(x, start_dim=1)
