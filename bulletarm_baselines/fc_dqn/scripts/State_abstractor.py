@@ -115,11 +115,11 @@ class State_abstractor():
             "flat_output": False
             })
 
-        conv_obs_avg_pool = nn.MaxPool2d(kernel_size=4, stride=1, padding=0)
+        conv_obs_avg_pool = nn.MaxPool2d(kernel_size=4)
         conv_obs_view = View([128])
         conv_obs_encoder = nn.Sequential(conv_obs, conv_obs_avg_pool, conv_obs_view)
 
-        conv_hand_obs_avg_pool = nn.MaxPool2d(kernel_size=2, stride=1, padding=0)
+        conv_hand_obs_avg_pool = nn.MaxPool2d(kernel_size=3)
         conv_hand_obs_view = View([128])
         conv_hand_obs_encoder = nn.Sequential(conv_hand_obs, conv_hand_obs_avg_pool, conv_hand_obs_view)
         
