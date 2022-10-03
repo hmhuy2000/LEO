@@ -283,5 +283,5 @@ class State_abstractor():
 
 
 if __name__ == '__main__':
-    model = State_abstractor(goal_str=env, use_equivariant=use_equivariant, equal_param=False, device=torch.device('cuda'))
+    model = State_abstractor(goal_str=env, use_equivariant=use_equivariant, device=torch.device('cuda'))
     model.train_state_abstractor(num_training_steps=400)

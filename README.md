@@ -81,7 +81,7 @@ Project website:[https://sites.google.com/view/leo-icra](https://sites.google.co
     * Set ```--env```
     * Set ```--use_equivariant```
     ```
-    ./scripts/run_collect_data.sh
+    ./scripts/run_train_classifier.sh
     ```
 
 1. train agent
