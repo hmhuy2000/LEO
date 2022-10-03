@@ -5,7 +5,8 @@ Pipfile.lock
 wandb/
 check_collect_image/
 Loss_and_Acc/
-bulletarm_baselines/fc_dqn/classifiers/
+bulletarm_baselines/fc_dqn/classifiers/*.pt
+bulletarm_baselines/fc_dqn/classifiers/*.h5
 abc.txt
 mnp.txt
 outlier/
