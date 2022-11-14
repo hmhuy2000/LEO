@@ -3,7 +3,7 @@
 
 This repository contains the code of the paper [Learning from Pixels with Expert Observations](https://sites.google.com/view/leo-icra) 
 
-Project website:[https://sites.google.com/view/leo-icra](https://sites.google.com/view/leo-icra)
+Project website:[https://sites.google.com/view/leo-rb](https://sites.google.com/view/leo-rb)
 
 ----
 
