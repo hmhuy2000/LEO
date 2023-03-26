@@ -68,7 +68,6 @@ Project website:[https://sites.google.com/view/leo-rb](https://sites.google.com/
 
     In file [scripts/run_collect_data.sh](https://github.com/hmhuy2000/LEO/blob/main/scripts/run_collect_data.sh):
 
-    * Set PYTHONPATH
     * Set ```--env```
     * Set ```--samples_per_class```
     ```
@@ -79,7 +78,6 @@ Project website:[https://sites.google.com/view/leo-rb](https://sites.google.com/
 
     In file [scripts/run_train_classifier.sh](https://github.com/hmhuy2000/LEO/blob/main/scripts/run_train_classifier.sh):
 
-    * Set PYTHONPATH
     * Set ```--env```
     * Set ```--use_equivariant```
     ```
@@ -90,7 +88,6 @@ Project website:[https://sites.google.com/view/leo-rb](https://sites.google.com/
 
     In file [scripts/run_train_agent.sh](https://github.com/hmhuy2000/LEO/blob/main/scripts/run_train_agent.sh):
 
-    * Set PYTHONPATH
     * Set ```--env```
     * Set ```--use_equivariant```
     * Set ```--algorithm```
