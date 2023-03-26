@@ -41,6 +41,7 @@ Project website:[https://sites.google.com/view/leo-rb](https://sites.google.com/
 
 ## Arguments
 ### ```--env```: environment for training:
+![List of tasks](https://github.com/hmhuy2000/LEO/blob/8de1c5fa38878da40f91787fb11ae98f012e203c/all_tasks.png)
 * block_stacking
 * house_building_1
 * house_building_2
