@@ -1,7 +1,6 @@
 import numpy as np
 import torch
 import torch.nn as nn
-import torch.nn.functional as F
 
 
 class ConvEncoder(nn.Module):
@@ -27,7 +26,6 @@ class ConvEncoder(nn.Module):
             self.output_size = int(np.prod(self.output_size))
         self.relu = nn.ReLU(inplace=True)
         self.pool = nn.MaxPool2d(kernel_size=2)
-
 
         # create conv and padding layers
         convs, pads = self.make_convs_()
@@ -66,8 +64,7 @@ class ConvEncoder(nn.Module):
                     x = self.norms[i](x)
 
                 x = self.relu(x)
-                if not last:
-                    x = self.pool(x)
+                x = self.pool(x)
 
         if self.flat_output:
             x = torch.flatten(x, start_dim=1)
@@ -137,3 +134,113 @@ class ConvEncoder(nn.Module):
             channels = self.filter_counts[-1]
 
         return width, height, channels
+
+class CNNOBSEncoder(nn.Module):
+    def __init__(self, filter_counts=[16, 32, 64, 128, 256, 128], dim_out=128):
+        super(CNNOBSEncoder, self).__init__()
+        
+        self.obs_encoder = nn.Sequential(
+            ### 128x128###
+            nn.Conv2d(1, filter_counts[0], kernel_size=3, stride=1, padding=1),
+            nn.BatchNorm2d(filter_counts[0]),
+            nn.GELU(),
+            nn.MaxPool2d(kernel_size=2, stride=2),
+            
+            ### 64x64 ###
+            nn.Conv2d(filter_counts[0], filter_counts[1], kernel_size=3, stride=1, padding=1),
+            nn.BatchNorm2d(filter_counts[1]),
+            nn.GELU(),
+            nn.MaxPool2d(kernel_size=2, stride=2),
+            
+            ### 32x32 ###
+            nn.Conv2d(filter_counts[1], filter_counts[2], kernel_size=3, stride=1, padding=1),
+            nn.BatchNorm2d(filter_counts[2]),
+            nn.GELU(),
+            nn.MaxPool2d(kernel_size=2, stride=2),
+            
+            ### 16x16 ###
+            nn.Conv2d(filter_counts[2], filter_counts[3], kernel_size=3, stride=1, padding=1),
+            nn.BatchNorm2d(filter_counts[3]),
+            nn.GELU(),
+            nn.MaxPool2d(kernel_size=2, stride=2),
+            
+            ### 8x8 ###
+            nn.Conv2d(filter_counts[3], filter_counts[4], kernel_size=3, stride=1, padding=1),
+            nn.BatchNorm2d(filter_counts[4]),
+            nn.GELU(),
+            
+            nn.Conv2d(filter_counts[4], filter_counts[5], kernel_size=3, stride=1, padding=0),
+            nn.BatchNorm2d(filter_counts[5]),
+            nn.GELU(),
+            nn.MaxPool2d(kernel_size=2, stride=2),
+            
+            ### 3x3 ###
+            nn.Conv2d(filter_counts[5], dim_out, kernel_size=3, stride=1, padding=0),
+            nn.BatchNorm2d(dim_out),
+            nn.GELU(),   
+        )
+        self.init_weights()
+        
+    def forward(self, x):
+        return self.obs_encoder(x)
+    
+    def init_weights(self):
+        for m in self.modules():
+            if isinstance(m, nn.Conv2d):
+                nn.init.kaiming_normal_(m.weight, mode='fan_out', nonlinearity='relu')
+                if m.bias is not None:
+                    nn.init.constant_(m.bias, 0)
+            elif isinstance(m, nn.BatchNorm2d):
+                nn.init.constant_(m.weight, 1)
+                nn.init.constant_(m.bias, 0)
+            elif isinstance(m, nn.Linear):
+                nn.init.normal_(m.weight, 0, 0.01)
+                nn.init.constant_(m.bias, 0)
+                
+
+class CNNHandObsEncoder(nn.Module):
+    def __init__(self, filter_counts=[32, 64, 128], dim_out=128):
+        super(CNNHandObsEncoder, self).__init__()
+        
+        self.hand_obs_encoder = nn.Sequential(
+            ### 24x24 ###
+            nn.Conv2d(1, filter_counts[0], kernel_size=3, stride=1, padding=1),
+            nn.BatchNorm2d(filter_counts[0]),
+            nn.GELU(),
+            nn.MaxPool2d(kernel_size=2, stride=2),
+            
+            ### 12x12 ###
+            nn.Conv2d(filter_counts[0], filter_counts[1], kernel_size=3, stride=1, padding=1),
+            nn.BatchNorm2d(filter_counts[1]),
+            nn.GELU(),
+            nn.MaxPool2d(kernel_size=2, stride=2),
+            
+            ### 6x6 ###                                                                  
+            nn.Conv2d(filter_counts[1], filter_counts[2], kernel_size=3, stride=1, padding=1),
+            nn.BatchNorm2d(filter_counts[2]),
+            nn.GELU(),
+            nn.MaxPool2d(kernel_size=2, stride=2),
+  
+            ### 3x3 ###
+            nn.Conv2d(filter_counts[2], dim_out, kernel_size=3, stride=1, padding=0),
+            nn.BatchNorm2d(dim_out),
+            nn.GELU(),
+            
+        )
+        self.init_weights()
+
+    def forward(self, x):
+        return self.hand_obs_encoder(x)
+    
+    def init_weights(self):
+        for m in self.modules():
+            if isinstance(m, nn.Conv2d):
+                nn.init.kaiming_normal_(m.weight, mode='fan_out', nonlinearity='relu')
+                if m.bias is not None:
+                    nn.init.constant_(m.bias, 0)
+            elif isinstance(m, nn.BatchNorm2d):
+                nn.init.constant_(m.weight, 1)
+                nn.init.constant_(m.bias, 0)
+            elif isinstance(m, nn.Linear):
+                nn.init.normal_(m.weight, 0, 0.01)
+                nn.init.constant_(m.bias, 0)

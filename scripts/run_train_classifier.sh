@@ -1,6 +1,4 @@
-# export PYTHONPATH=/path/to/LEO/:$PYTHONPATH
-
-export PYTHONPATH=/home/huy/Documents/Robotics/LEO/:$PYTHONPATH
+export PYTHONPATH="$PWD/"
 
 CUDA_VISIBLE_DEVICES=0 python bulletarm_baselines/fc_dqn/scripts/State_abstractor.py\
-  --env=house_building_1 --use_equivariant=False
+  --env=block_stacking --use_equivariant=1

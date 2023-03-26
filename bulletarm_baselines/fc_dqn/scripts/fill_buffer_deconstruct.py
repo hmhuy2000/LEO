@@ -10,6 +10,7 @@ from bulletarm_baselines.fc_dqn.utils.parameters import *
 from bulletarm_baselines.fc_dqn.utils.dataset import ListDataset
 import matplotlib.pyplot as plt
 import os
+import argparse
 
 sys.path.append('./')
 sys.path.append('..')
@@ -164,7 +165,7 @@ def remove_outlier(abs_states,num_classes):
         max_abs = torch.full(abs_states.shape,num_classes - 1,dtype=abs_states.dtype).to(device)
         return torch.min(abs_states, max_abs)
 
-def train_fillDeconstructUsingRunner(agent, replay_buffer,classifier):
+def train_fillDeconstructUsingRunner(agent, replay_buffer):
   if env in ['block_stacking',
              'house_building_1',
              'house_building_2',
@@ -196,24 +197,22 @@ def train_fillDeconstructUsingRunner(agent, replay_buffer,classifier):
   for i, transition in enumerate(transitions):
     (state, in_hand, obs), action, reward, done, (next_state, next_in_hand, next_obs),(abs_state,abs_state_next) = transition
     true_abs_state = torch.tensor(abs_state).to(device)
-    pred_abs_state = get_cls(classifier, obs.reshape(1,1,128,128),in_hand.reshape(1,1,24,24))[0]
-    if (use_classifier):
-        abs_state = pred_abs_state
-    else:
-        abs_state = true_abs_state
-    abs_state = remove_outlier(abs_state, num_class)
-    true_abs_state_next = torch.tensor(abs_state_next).to(device)
-    pred_abs_state_next = get_cls(classifier, next_obs.reshape(1,1,128,128),next_in_hand.reshape(1,1,24,24))[0]
 
-    if (use_classifier):
-        abs_state_next = pred_abs_state_next 
-    else:
-        abs_state_next = true_abs_state_next 
+    abs_state = (i+1) % (num_class - 1)
+    if (abs_state == 0):
+        abs_state = num_class - 1
+    abs_state = torch.tensor(abs_state).to(device)
+    abs_state = remove_outlier(abs_state, num_class)
+    # assert abs_state == true_abs_state
+    
+    true_abs_state_next = torch.tensor(abs_state_next).to(device)
+    abs_state_next = abs_state - 1
+    # assert abs_state_next == true_abs_state_next
     abs_state_next = remove_outlier(abs_state_next,num_class)
 
     abs_goal = update_abs_goals(abs_state)
     abs_goal_next =  update_abs_goals(abs_state_next)
-
+    
     actions_star_idx, actions_star = agent.getActionFromPlan(torch.tensor(np.expand_dims(action, 0)))
     replay_buffer.add(ExpertTransition(
       torch.tensor(state).float(),
@@ -237,7 +236,7 @@ def train_fillDeconstructUsingRunner(agent, replay_buffer,classifier):
     )
   decon_envs.close()
 
-def collectData4ClassifierUsingDeconstruct(env='2b2b1r', num_samples= 1000):
+def collectData4ClassifierUsingDeconstruct(env='block_stacking', samples_per_class=250):
     if env in ['block_stacking',
              'house_building_1',
              'house_building_2',
@@ -265,21 +264,18 @@ def collectData4ClassifierUsingDeconstruct(env='2b2b1r', num_samples= 1000):
     decon_envs = EnvWrapper(num_processes, deconstruct_env, env_config, planner_config)
     num_objects = decon_envs.getNumObj()
     num_classes = 2*num_objects-1
-    print('number of classes:',num_classes)
+    print(f'[INFO] Num classes: {num_classes}')
 
-    num_episodes = num_samples // num_classes
     dataset = ListDataset()
 
-    transitions = decon_envs.gatherDeconstructTransitions(num_episodes)
+    transitions = decon_envs.gatherDeconstructTransitions(samples_per_class)
     decon_envs.close()
     transitions.reverse()
 
     true_index = [i for i in range(len(transitions)) if transitions[i][3] is True]
     perfect_index = [true_index[i] for i in range(len(true_index)) if (true_index[i] == num_classes-2) or (true_index[i]-true_index[i-1] == num_classes-1)]
-    
     for i in perfect_index:
         for j in range(num_classes-1, 0, -1):
-        
             dataset.add("HAND_BITS", transitions[i-j+1][0][0])
             dataset.add("OBS", transitions[i-j+1][0][2])
             dataset.add("HAND_OBS", transitions[i-j+1][0][1])
@@ -292,25 +288,16 @@ def collectData4ClassifierUsingDeconstruct(env='2b2b1r', num_samples= 1000):
                 dataset.add("HAND_OBS", transitions[i][4][1])
                 dataset.add("DONES", 1)
                 dataset.add("ABS_STATE_INDEX", 0)
-
             
     dataset = dataset.to_array_dataset({
         "HAND_BITS": np.int32, "OBS": np.float32, "HAND_OBS": np.float32,
         "DONES": bool,
         "ABS_STATE_INDEX": np.int32,
     })
-    dataset = dataset.split(5000*num_classes)
-    print("Number collected data sample: ", len(dataset['OBS']))
-
+    print("Number collected samples: ", dataset.size)
     dataset.save_hdf5(f"bulletarm_baselines/fc_dqn/classifiers/{env}.h5")
-
     print("DONE!!!")
 
 if __name__ == '__main__':
-    create_folder('bulletarm_baselines/fc_dqn/classifiers')
-
-    if (env == 'house_building_4'):
-        num_samples = 100000
-    else:
-        num_samples = 50000
-    collectData4ClassifierUsingDeconstruct(env=env, num_samples=num_samples)
+    # argument parser
+    collectData4ClassifierUsingDeconstruct(env=env, samples_per_class=samples_per_class)

@@ -22,6 +22,7 @@ env_group.add_argument('--render', type=strToBool, default=False, help='Render t
 env_group.add_argument('--workspace_size', type=float, default=0.3, help='Size of the workspace in meters')
 env_group.add_argument('--heightmap_size', type=int, default=128, help='Size of the heightmap in pixels')
 env_group.add_argument('--patch_size', type=int, default=24, help='Size of the in-hand image in pixels')
+env_group.add_argument('--samples_per_class', type=int, default=100, help='The number of samples per class in the collected dataset for state abstractor')
 
 training_group = parser.add_argument_group('training')
 training_group.add_argument('--algorithm', default='sdqfd', choices=['sdqfd', 'dqn', 'dqfd', 'adet'], help='The learning algorithm')
@@ -33,7 +34,7 @@ training_group.add_argument('--gamma', type=float, default=0.95, help='The disco
 training_group.add_argument('--explore', type=int, default=0, help='The number of exploration steps')
 training_group.add_argument('--fixed_eps', action='store_true', help='If true, fix the epsilon at the final value')
 training_group.add_argument('--init_eps', type=float, default=0.5, help='The initial value of the epsilon schedule')
-training_group.add_argument('--final_eps', type=float, default=0.0, help='The final value of the epsilon schedule')
+training_group.add_argument('--final_eps', type=float, default=0.01, help='The final value of the epsilon schedule')
 training_group.add_argument('--training_iters', type=int, default=1, help='The number of training iterations per step')
 training_group.add_argument('--training_offset', type=int, default=100, help='The minimal number of transitions to start training')
 training_group.add_argument('--max_train_step', type=int, default=10000, help='The maximal number of training steps')
@@ -55,7 +56,7 @@ training_group.add_argument('--max_z', type=float, default=0.20, help='The max z
 training_group.add_argument('--equi_n', type=int, default=4, help='The order of the equivariant group for equivariant networks')
 training_group.add_argument('--aug', type=strToBool, default=False, help='If true, perform RAD data augmentation at each sample step')
 training_group.add_argument('--aug_type', type=str, choices=['se2', 'cn', 't', 'shift'], default='se2', help='The type of data augmentation')
-training_group.add_argument('--use_classifier', type=strToBool, default=True)
+training_group.add_argument('--use_classifier', type=int, default=0)
 
 eval_group = parser.add_argument_group('eval')
 eval_group.add_argument('--num_eval_processes', type=int, default=5, help='The number of parallel environments for evaluation')
@@ -84,29 +85,25 @@ logging_group.add_argument('--no_bar', action='store_true')
 logging_group.add_argument('--time_limit', type=float, default=10000)
 logging_group.add_argument('--load_sub', type=str, default=None)
 logging_group.add_argument('--wandb_group', type=str, default=None)
-logging_group.add_argument('--wandb_logs', type=strToBool, default=False)
+logging_group.add_argument('--wandb_logs', type=int, default=0)
 logging_group.add_argument('--get_bad_pred', type=int, default=0)
 logging_group.add_argument('--classifier_name', type=str, default=None)
-training_group.add_argument('--dummy_number', type=int, default=1)
-training_group.add_argument('--use_equivariant', type=strToBool, default=False)
-training_group.add_argument('--train_phrase', type=strToBool, default=True)
+buffer_group.add_argument('--dummy_number', type=int, default=1)
+buffer_group.add_argument('--use_equivariant', type=int, default=0)
 
 args = parser.parse_args()
-dummy_number = args.dummy_number
 use_equivariant = args.use_equivariant
-# use_proser = args.use_proser
+
 # env
 random_orientation = args.random_orientation
 env = args.env
-if (env == 'house_building_3'):
-  env = '1l2b2r'
 num_objects = args.num_objects
 max_episode_steps = args.max_episode_steps
 action_sequence = args.action_sequence
 num_processes = args.num_processes
 render = args.render
 robot = args.robot
-train_phrase = args.train_phrase
+samples_per_class = args.samples_per_class
 
 workspace_size = args.workspace_size
 if env.find('bumpy') > -1:

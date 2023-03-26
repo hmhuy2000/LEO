@@ -1,6 +1,4 @@
-# export PYTHONPATH=/path/to/LEO/:$PYTHONPATH
-
-export PYTHONPATH=/home/huy/Documents/Robotics/LEO/:$PYTHONPATH
+export PYTHONPATH="$PWD/"
 
 CUDA_VISIBLE_DEVICES=0 python bulletarm_baselines/fc_dqn/scripts/fill_buffer_deconstruct.py\
- --env=house_building_1
+ --env=block_stacking --samples_per_class=1000

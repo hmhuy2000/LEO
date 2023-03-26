@@ -1,6 +1,6 @@
 from bulletarm_baselines.fc_dqn.utils.SoftmaxClassifier import SoftmaxClassifier
 from bulletarm_baselines.fc_dqn.utils.View import View
-from bulletarm_baselines.fc_dqn.utils.ConvEncoder import ConvEncoder
+from bulletarm_baselines.fc_dqn.utils.ConvEncoder import ConvEncoder, CNNOBSEncoder, CNNHandObsEncoder
 from bulletarm_baselines.fc_dqn.utils.SplitConcat import SplitConcat
 from bulletarm_baselines.fc_dqn.utils.FCEncoder import FCEncoder
 from bulletarm_baselines.fc_dqn.utils.EquiObs import EquiObs
@@ -27,35 +27,20 @@ def create_folder(path):
     except:
         print(f'[INFO] folder {path} existed, can not create new')
 
-def load_dataset(goal_str, validation_fraction=0.2, test_fraction=0.1, eval=False):
+def load_dataset(goal_str, validation_fraction=0.75):
     dataset = ArrayDataset(None)
-    if eval:
-        print(f"=================\t Loading eval dataset {goal_str} \t=================")
-        dataset.load_hdf5(f"bulletarm_baselines/fc_dqn/classifiers/train_data_{goal_str}_goal_25_dqn_equi.h5")
-        num_samples = dataset.size
-        print(f"Total number samples: {num_samples}")
-        abs_index = dataset["TRUE_ABS_STATE_INDEX"]
-        print(f"Class: {np.unique(abs_index, return_counts=True)[0]}")
-        print(f"Number samples/each class: {np.unique(abs_index, return_counts=True)[1]}")
-        return dataset
-    else:
-        print(f"=================\t Loading training dataset {goal_str}\t=================")
-        dataset.load_hdf5(f"bulletarm_baselines/fc_dqn/classifiers/{goal_str}.h5")
-        dataset.shuffle()
-        num_samples = dataset.size
-        print(f"Total number samples: {num_samples}")
-        abs_index = dataset["ABS_STATE_INDEX"]
-        print(f"Class: {np.unique(abs_index, return_counts=True)[0]}")
-        print(f"Number samples/each class: {np.unique(abs_index, return_counts=True)[1]}")
-        valid_samples = int(num_samples * validation_fraction)
-        valid_dataset = dataset.split(valid_samples)
-        test_samples = int(num_samples * test_fraction)
-        test_dataset = dataset.split(test_samples)
-
-
-        dataset.size = dataset.size - valid_dataset.size - test_dataset.size
-        return dataset, valid_dataset, test_dataset
-
+    print(f"=================\t Loading training dataset {goal_str}\t=================")
+    dataset.load_hdf5(f"bulletarm_baselines/fc_dqn/classifiers/{goal_str}.h5")
+    dataset.shuffle()
+    num_samples = dataset.size
+    print(f"Total number samples: {num_samples}")
+    abs_index = dataset["ABS_STATE_INDEX"]
+    print(f"Class: {np.unique(abs_index, return_counts=True)[0]}")
+    print(f"Number samples/each class: {np.unique(abs_index, return_counts=True)[1]}")
+    valid_samples = int(num_samples * validation_fraction)
+    valid_dataset = dataset.split(valid_samples)
+    dataset.size = dataset.size - valid_dataset.size
+    return dataset, valid_dataset
 
 class State_abstractor():
     def __init__(self, goal_str=None, use_equivariant=None, device=None):
@@ -89,74 +74,42 @@ class State_abstractor():
 
         if self.use_equivariant:
             print('='*50)
-            print('----------\t Equivaraint Model \t -----------')
+            print('----------\t Equivaraint State Abstractor \t -----------')
             print('='*50)
-            conv_obs = EquiObs(num_subgroups=4, filter_sizes=[3, 3, 3, 3, 3, 3], filter_counts=[32, 64, 128, 256, 512, 128])
-
-            conv_hand_obs = EquiHandObs(num_subgroups=8, filter_sizes=[3, 3, 3, 3], filter_counts=[32, 64, 128, 128])
-            
-            conv_obs_max_pool = nn.MaxPool2d(kernel_size=2)
-            conv_obs_view = View([128])
-            conv_obs_encoder = nn.Sequential(conv_obs, conv_obs_max_pool, conv_obs_view)
-
-            conv_hand_obs_view = View([128])
-            conv_hand_obs_encoder = nn.Sequential(conv_hand_obs, conv_hand_obs_view)
-        
+            conv_obs = EquiObs(num_subgroups=4)
         else:    
-            conv_obs = ConvEncoder({
-            "input_size": [128, 128, 1],
-            "filter_size": [3, 3, 3, 3, 3, 3],
-            "filter_counts": [32, 64, 128, 256, 512, 128],
-            "strides": [1, 1, 1, 1, 1, 1],
-            "use_batch_norm": True,
-            "activation_last": True,
-            "flat_output": False
-            })
+            conv_obs = CNNOBSEncoder()
+        conv_hand_obs = CNNHandObsEncoder()
 
-            conv_hand_obs = ConvEncoder({
-            "input_size": [24, 24, 1],
-            "filter_size": [3, 3, 3, 3],
-            "filter_counts": [32, 64, 128, 128],
-            "strides": [1, 1, 1, 1],
-            "use_batch_norm": True,
-            "activation_last": True,
-            "flat_output": False
-            })
+        conv_obs_view = View([128])
+        conv_obs_encoder = nn.Sequential(conv_obs, conv_obs_view)
 
-            conv_obs_max_pool = nn.MaxPool2d(kernel_size=4)
-            conv_obs_view = View([128])
-            conv_obs_encoder = nn.Sequential(conv_obs, conv_obs_max_pool, conv_obs_view)
+        conv_hand_obs_view = View([128])
+        conv_hand_obs_encoder = nn.Sequential(conv_hand_obs, conv_hand_obs_view)
 
-            conv_hand_obs_max_pool = nn.MaxPool2d(kernel_size=3)
-            conv_hand_obs_view = View([128])
-            conv_hand_obs_encoder = nn.Sequential(conv_hand_obs, conv_hand_obs_max_pool, conv_hand_obs_view)
-        
         conv_encoder = SplitConcat([conv_obs_encoder, conv_hand_obs_encoder], 1)
 
         intermediate_fc = FCEncoder({
             "input_size": 256,
-            "neurons": [256, 256, 128],
+            "neurons": [256, 128],
             "use_batch_norm": True,
             "use_layer_norm": False,
             "activation_last": True
         })
 
-        encoder = nn.Sequential(conv_encoder, intermediate_fc, nn.Dropout(p=0.5))
-
+        encoder = nn.Sequential(conv_encoder, intermediate_fc, nn.Dropout(p=0.1))
         encoder.output_size = 128
 
-        self.classifier = SoftmaxClassifier(encoder, self.num_classes)
+        self.classifier = SoftmaxClassifier(encoder, self.num_classes, conv_encoder)
         self.classifier.to(self.device)
         return self.classifier
 
-    def train_state_abstractor(self, num_training_steps=10000, learning_rate=1e-3, weight_decay=1e-5, batch_size=32, visualize=True):
+    def train_state_abstractor(self, num_training_steps=10000, learning_rate=1e-3, weight_decay=1e-5, visualize=True):
         self.classifier.train()
         # Load dataset
-        self.batch_size = batch_size
-        self.dataset, self.valid_dataset, self.test_dataset = load_dataset(goal_str=self.goal_str)
+        self.dataset, self.valid_dataset = load_dataset(goal_str=self.goal_str)
         epoch_size = len(self.dataset['OBS']) // self.batch_size
         print(f'Number of trainable parameters: {sum(p.numel() for p in self.classifier.parameters() if p.requires_grad)}')
-     
         opt = optim.Adam(self.classifier.parameters(), lr=learning_rate, weight_decay=weight_decay)
         best_val_loss, best_classifier = None, None
         best_step = None
@@ -202,13 +155,12 @@ class State_abstractor():
         self.classifier.eval()
         final_valid_loss = self.validate(dataset=self.valid_dataset)
         print(f"Best Valid Loss: {final_valid_loss[0]} and Best Valid Accuracy: {final_valid_loss[1]}")
-        test_loss = self.validate(dataset=self.test_dataset)
-        print(f"Test Loss: {test_loss[0]} and Test Accuracy: {test_loss[1]}")
-
+        print('Saving classifier...')
         torch.save(self.classifier.state_dict(), f"bulletarm_baselines/fc_dqn/classifiers/{self.name}.pt")   
-
+        print('Classifier saved.')
+        self.classifier.eval()
         if visualize:
-            self.plot_result(result=result)
+            self.plot_result(result)
 
     def validate(self, dataset):
         self.classifier.eval()
@@ -244,7 +196,7 @@ class State_abstractor():
 
         # Plot Loss and Acc curve
         create_folder('Loss_and_Acc')
-        plt.figure(figsize=(8, 6))
+        plt.figure(figsize=(10, 10))
         x = np.arange(0, valid_losses.shape[0])
         x *= 500
 
@@ -265,31 +217,14 @@ class State_abstractor():
         plt.legend()
 
         plt.savefig(f'Loss_and_Acc/{self.name}.png')
+        plt.close()
 
     def load_classifier(self):
         self.classifier.train()
         self.classifier.load_state_dict(torch.load(f"bulletarm_baselines/fc_dqn/classifiers/{self.name}.pt"))
         self.classifier.eval()
         print(f'------\t Successfully load classifier {self.name}\t-----------')
-        return self.classifier
-
-    def evaluate_miss_dataset(self):
-        self.eval_dataset = load_dataset(goal_str=self.goal_str, eval=True)
-
-        self.load_classifier()
-        preds = []
-        print(self.name)
-        for i in range(len(self.eval_dataset['OBS'])):
-            obs = torch.from_numpy(self.eval_dataset['OBS'][i][np.newaxis, np.newaxis, :, :]).to(self.device)
-            hand_obs = torch.from_numpy(self.eval_dataset['HAND_OBS'][i][np.newaxis, np.newaxis, :, :]).to(self.device)
-            pred = self.classifier.get_prediction([obs, hand_obs], logits=False, hard=True)
-            preds.append(pred.detach().cpu().numpy())
-            
-        print(f"Acc score: {accuracy_score(self.eval_dataset['TRUE_ABS_STATE_INDEX'], preds)}")
-        print(f"F1 score: {f1_score(self.eval_dataset['TRUE_ABS_STATE_INDEX'], preds, average='weighted')}")
-        print(f"Classification report: {classification_report(self.eval_dataset['TRUE_ABS_STATE_INDEX'], preds)}")
-
 
 if __name__ == '__main__':
     model = State_abstractor(goal_str=env, use_equivariant=use_equivariant, device=torch.device('cuda'))
-    model.train_state_abstractor(num_training_steps=400)
+    model.train_state_abstractor(num_training_steps=12000, visualize=False)
