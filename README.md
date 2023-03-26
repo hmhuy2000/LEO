@@ -69,6 +69,7 @@ Project website:[https://sites.google.com/view/leo-rb](https://sites.google.com/
 
     * Set PYTHONPATH
     * Set ```--env```
+    * Set ```--samples_per_class``
     ```
     ./scripts/run_collect_data.sh
     ```
