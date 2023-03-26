@@ -32,7 +32,6 @@ from bulletarm_baselines.fc_dqn.utils.parameters import *
 from bulletarm_baselines.fc_dqn.utils.torch_utils import augmentBuffer, augmentBufferD4
 from bulletarm_baselines.fc_dqn.scripts.fill_buffer_deconstruct import train_fillDeconstructUsingRunner
 
-# from bulletarm_baselines.fc_dqn.scripts.all_about_classifier import load_classifier
 from bulletarm_baselines.fc_dqn.scripts.State_abstractor import State_abstractor
 from bulletarm_baselines.fc_dqn.utils.dataset import ListDataset, count_objects
 
@@ -80,13 +79,13 @@ def saveModelAndInfo(logger, agent):
     logger.exportData()
     agent.saveModel(os.path.join(logger.models_dir, 'snapshot'))
 
-def get_cls(classifier, obs, inhand):
+def get_cls(state_abstractor, obs, inhand):
     obs = obs.clone().detach().type(torch.cuda.FloatTensor).to(device)
     inhand = inhand.clone().detach().type(torch.cuda.FloatTensor).to(device)
-    res = classifier([obs,inhand]).clone().detach().type(torch.cuda.FloatTensor).to(device)
+    res = state_abstractor.classifier([obs,inhand]).clone().detach().type(torch.cuda.FloatTensor).to(device)
     return torch.argmax(res,dim=1)
 
-def evaluate(envs, agent,num_eval_episodes,logger=None, wandb_logs=False,classifier=None,num_steps=0,debug = False,render=False):
+def evaluate(envs, agent,num_eval_episodes,logger=None, wandb_logs=False,state_abstractor=None,num_steps=0,debug = False,render=False):
     num_objects = envs.getNumObj()
     num_classes = 2 * num_objects - 1 
     states, in_hands, obs = envs.reset()
@@ -108,7 +107,7 @@ def evaluate(envs, agent,num_eval_episodes,logger=None, wandb_logs=False,classif
         # plt.show()
         # plt.imshow(in_hands.reshape((24,24)))
         # plt.show()
-        pred_abs_states = get_cls(classifier, obs, in_hands)
+        pred_abs_states = get_cls(state_abstractor, obs, in_hands)
         if (use_classifier):
             abs_states = pred_abs_states 
         else:
@@ -227,9 +226,8 @@ def train():
     num_objects = envs.getNumObj()
     num_classes = 2 * num_objects - 1 
     print(f'num class = {num_classes}')
-    classifier = State_abstractor(goal_str=env, use_equivariant=use_equivariant, device=device)
-    classifier = classifier.load_classifier()
-    # classifier = load_classifier(goal_str = env,num_classes=num_classes,use_equivariant=use_equivariant, use_proser=use_proser, dummy_number=dummy_number,device=device)
+    state_abstractor = State_abstractor(goal_str=env, use_equivariant=use_equivariant, device=device)
+    state_abstractor.load_classifier()
     agent = createAgent(num_classes)
     eval_agent = createAgent(num_classes,test=True)
     # load classifier
@@ -274,7 +272,7 @@ def train():
     #------------------------------------- expert transition ----------------------------------------#    
     if planner_episode > 0 and not load_sub:
         if fill_buffer_deconstruct:
-            train_fillDeconstructUsingRunner(agent, replay_buffer,classifier)
+            train_fillDeconstructUsingRunner(agent, replay_buffer)
     #------------------------------------- pretrainning with expert ----------------------------------------#    
     #-------------------------------------- start trainning ----------------------------------------------#
     if not no_bar:
@@ -308,7 +306,7 @@ def train():
             eps = exploration.value(logger.num_eps)
         is_expert = 0
         true_abs_states = torch.tensor(envs.get_true_abs_states()).to(device)
-        pred_abs_states = get_cls(classifier,obs,in_hands)
+        pred_abs_states = get_cls(state_abstractor, obs, in_hands)
         if (use_classifier):
             abs_states = pred_abs_states 
         else:
@@ -371,7 +369,7 @@ def train():
         states_, in_hands_, obs_, rewards, dones = envs.stepWait()
         clone_rewards = copy.deepcopy(rewards)
         true_abs_states_next = torch.tensor(envs.get_true_abs_states()).to(device) 
-        pred_abs_states_next = get_cls(classifier, obs_, in_hands_)
+        pred_abs_states_next = get_cls(state_abstractor, obs_, in_hands_)
         if (use_classifier):
             abs_states_next = pred_abs_states_next 
         else:
@@ -447,7 +445,7 @@ def train():
             if eval_thread is not None:
                 eval_thread.join()
             eval_agent.copyNetworksFrom(agent)
-            eval_thread = threading.Thread(target=evaluate, args=(eval_envs, eval_agent,num_eval_episodes,logger, wandb_logs,classifier,logger.num_training_steps,False))
+            eval_thread = threading.Thread(target=evaluate, args=(eval_envs, eval_agent,num_eval_episodes,logger, wandb_logs, state_abstractor,logger.num_training_steps,False))
             eval_thread.start()
 
         if logger.num_steps % (num_processes * save_freq) == 0:
@@ -475,14 +473,15 @@ def valid_phrase_func():
     eval_envs = EnvWrapper(1, env, env_config, planner_config)
     num_objects = eval_envs.getNumObj()
     num_classes = 2 * num_objects - 1 
-    classifier = State_abstractor(goal_str=env, use_equivariant=use_equivariant, device=device).load_classifier()
+    state_abstractor = State_abstractor(goal_str=env, use_equivariant=use_equivariant, device=device)
+    state_abstractor.load_classifier()
 
     eval_agent = createAgent(num_classes,test=True)
     eval_agent.train()
     if load_model_pre:
         eval_agent.loadModel(load_model_pre)
     eval_agent.eval()
-    evaluate(envs=eval_envs,agent=eval_agent,num_eval_episodes=100,classifier=classifier, debug=False,render=render)
+    evaluate(envs=eval_envs,agent=eval_agent,num_eval_episodes=100, state_abstractor=state_abstractor, debug=False,render=render)
     eval_envs.close()
 
 if __name__ == '__main__':
