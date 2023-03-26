@@ -41,6 +41,7 @@ Project website:[https://sites.google.com/view/leo-rb](https://sites.google.com/
 
 ## Arguments
 ### ```--env```: environment for training:
+![List of tasks](https://github.com/hmhuy2000/LEO/blob/8de1c5fa38878da40f91787fb11ae98f012e203c/all_tasks.png)
 * block_stacking
 * house_building_1
 * house_building_2
@@ -55,9 +56,6 @@ Project website:[https://sites.google.com/view/leo-rb](https://sites.google.com/
 ### ```--samples_per_class```: number of samples per class for collected dataset used for classifier
 ### ```--planner_episode```: number of expert episodes
 ### ```---max_train_step```: number of training steps
-### ```--use_classifier```: 
-* True: use our classifier
-* False: Use perfect classifier
 ### ```---load_model_pre```: pretrained path for validation
 ### ```--train_phrase```: 
 * True: training
@@ -93,7 +91,6 @@ Project website:[https://sites.google.com/view/leo-rb](https://sites.google.com/
     * Set ```--algorithm```
     * Set ```--planner_episode```
     * Set ```--max_train_step```
-    * Set ```--use_classifier```
     * set ```--load_model_pre``` for validation
     * set ```--train_phrase```
     ```
