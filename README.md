@@ -48,10 +48,11 @@ Project website:[https://sites.google.com/view/leo-rb](https://sites.google.com/
 * house_building_4
 ### ```--use_equivariant```:
 * True: use normal classifier
-* False: Use equivariant classifier
+* False: use equivariant classifier
 ### ```--algorithm```: Algorithm for training
 * DQN
 * SDQfD
+### ```--samples_per_class```: number of samples per class for collected dataset used for classifier
 ### ```--planner_episode```: number of expert episodes
 ### ```---max_train_step```: number of training steps
 ### ```--use_classifier```: 
@@ -69,7 +70,7 @@ Project website:[https://sites.google.com/view/leo-rb](https://sites.google.com/
 
     * Set PYTHONPATH
     * Set ```--env```
-    * Set ```--samples_per_class``
+    * Set ```--samples_per_class```
     ```
     ./scripts/run_collect_data.sh
     ```
