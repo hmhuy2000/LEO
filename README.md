@@ -1,5 +1,5 @@
 
-<h1>Learning from Expert Observations (LEO)</h1>
+<h1>Learning from Pixels with Expert Observations (LEO)</h1>
 
 This repository contains the code of the paper [Learning from Pixels with Expert Observations](https://sites.google.com/view/leo-rb) 
 
