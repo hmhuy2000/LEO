@@ -40,8 +40,8 @@ Project website: [https://sites.google.com/view/leo-rb](https://sites.google.com
     ```
 
 ## Arguments
-* ```--env```: Environment to train (block_stacking, house_building_1, house_building_2, house_building_3, house_building_4)
 ![List of tasks](https://github.com/hmhuy2000/LEO/blob/8de1c5fa38878da40f91787fb11ae98f012e203c/all_tasks.png)
+* ```--env```: Environment to train (block_stacking, house_building_1, house_building_2, house_building_3, house_building_4)
 * ```--use_equivariant```: True (use non-equivariant state abstractor), False (use equivariant state abstractor)
 * ```--algorithm```: Algorithm for training (DQN, SDQfD)
 * ```--samples_per_class```: Number of samples per class for collected dataset used for classifier
