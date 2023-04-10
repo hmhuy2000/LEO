@@ -1,7 +1,7 @@
 
 <h1>Learning from Pixels with Expert Observations</h1>
 
-This repository contains the code of the paper [Learning from Pixels with Expert Observations](https://sites.google.com/view/leo-rb) 
+Code accompany [Learning from Pixels with Expert Observations](https://sites.google.com/view/leo-rb) 
 
 Project website: [https://sites.google.com/view/leo-rb](https://sites.google.com/view/leo-rb)
 
@@ -46,8 +46,8 @@ Project website: [https://sites.google.com/view/leo-rb](https://sites.google.com
 * ```--algorithm```: Algorithm for training (DQN, SDQfD)
 * ```--samples_per_class```: Number of samples per class for collected dataset used for classifier
 * ```--planner_episode```: Number of expert episodes
-* ```---max_train_step```: Number of training steps
-* ```---load_model_pre```: Pretrained path for validation
+* ```--max_train_step```: Number of training steps
+* ```--load_model_pre```: Pretrained path for validation
 * ```--train_phase```: True (training) or False (validation)
 
 ## Usage
