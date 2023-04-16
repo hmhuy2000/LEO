@@ -145,10 +145,6 @@ def evaluate(envs, agent,num_eval_episodes,logger=None, wandb_logs=False,state_a
         actions_star = torch.cat((actions_star, states.unsqueeze(1)), dim=1)
         states_, in_hands_, obs_, rewards, dones = envs.step(actions_star, auto_reset=True)
 
-        # states_, in_hands_, obs_, rewards, dones = envs.step(actions_star, auto_reset=False)
-        # if (dones[0]):
-        #     time.sleep(5)
-        #     states_, in_hands_, obs_ = envs.reset()
 
         rewards = rewards.numpy()
         dones = dones.numpy()
@@ -237,8 +233,11 @@ def train():
         print('---- use true abstract state from environment    -----')
     
 
-    if load_model_pre != 'None':
+    if load_model_pre is not None:
+        print(f'load load agent from {load_model_pre}')
         agent.loadModel(load_model_pre)
+    else:
+        print('training from scratch')
     agent.train()
     eval_agent.train()
 
@@ -361,7 +360,6 @@ def train():
         buffer_obs = getCurrentObs(in_hands, obs)
         actions_star = torch.cat((actions_star, states.unsqueeze(1)), dim=1)
         envs.stepAsync(actions_star, auto_reset=False)
-        print(len(replay_buffer))
         if len(replay_buffer) >= training_offset:
             for training_iter in range(training_iters):
                 train_step(agent, replay_buffer, logger)

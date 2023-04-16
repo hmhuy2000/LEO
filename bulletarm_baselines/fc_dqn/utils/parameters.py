@@ -157,6 +157,8 @@ sl = args.sl
 planner_episode = args.planner_episode
 
 load_model_pre = args.load_model_pre
+if (load_model_pre == 'None'):
+   load_model_pre = None
 note = args.note
 seed = args.seed
 
