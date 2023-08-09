@@ -103,10 +103,6 @@ def evaluate(envs, agent,num_eval_episodes,logger=None, wandb_logs=False,state_a
     cnt = 0
     while evaled < num_eval_episodes:
         true_abs_states = torch.tensor(envs.get_true_abs_states()).to(device)
-        # plt.imshow(obs.reshape((128,128)))
-        # plt.show()
-        # plt.imshow(in_hands.reshape((24,24)))
-        # plt.show()
         pred_abs_states = get_cls(state_abstractor, obs, in_hands)
         if (use_classifier):
             abs_states = pred_abs_states 

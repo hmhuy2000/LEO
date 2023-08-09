@@ -30,13 +30,6 @@ Project website: [https://sites.google.com/view/leo-rb](https://sites.google.com
     ```
     pip install torch torchvision torchaudio --extra-index-url https://download.pytorch.org/whl/cu113
     pip install -r baseline_requirements.txt
-    pip install .
-    ```
-1. Run demo
-
-    Set base path in file [scripts/run_demo.sh](https://github.com/hmhuy2000/LEO/blob/main/scripts/run_demo.sh)
-    ```
-    ./scripts/run_demo.sh
     ```
 
 ## Arguments
@@ -65,4 +58,9 @@ Project website: [https://sites.google.com/view/leo-rb](https://sites.google.com
 1. Train agent
     ```
     ./scripts/run_train_agent.sh
+    ```
+
+1. Evaluate agent
+    ```
+    ./scripts/run_evaluate.sh
     ```

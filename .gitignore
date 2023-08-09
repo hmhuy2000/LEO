@@ -104,7 +104,6 @@ venv/
 ENV/
 env.bak/
 venv.bak/
-output/
 
 # Spyder project settings
 .spyderproject
@@ -123,5 +122,4 @@ output/
 
 *.zip
 *.h5
-*.pt
 save/
