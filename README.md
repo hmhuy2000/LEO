@@ -1,7 +1,7 @@
 
 <h1>Learning from Pixels with Expert Observations</h1>
 
-Code accompany [Learning from Pixels with Expert Observations](https://sites.google.com/view/leo-rb) 
+Code accompany [Learning from Pixels with Expert Observations](https://arxiv.org/pdf/2306.13872.pdf) 
 
 Project website: [https://sites.google.com/view/leo-rb](https://sites.google.com/view/leo-rb)
 
